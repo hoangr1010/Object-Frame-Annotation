@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Frame Annotation Demo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --accent: #8b5cf6;
+      --text: #e2e8f0;
+      --muted: #cbd5e1;
+      --danger: #f87171;
+      --success: #34d399;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(120% 120% at 10% 20%, #1a1f35, #0b1021);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    header {
+      padding: 32px 24px 16px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      letter-spacing: -0.5px;
+    }
+
+    .subhead {
+      color: var(--muted);
+      margin: 0;
+      line-height: 1.6;
+      max-width: 720px;
+    }
+
+    main {
+      padding: 0 24px 48px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      backdrop-filter: blur(8px);
+    }
+
+    .toolbar .info {
+      display: grid;
+      gap: 6px;
+    }
+
+    .toolbar strong {
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-weight: 600;
+      color: #0f172a;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      box-shadow: 0 10px 35px rgba(99, 102, 241, 0.35);
+    }
+
+    .muted-pill {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 10px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .frame {
+      position: relative;
+      border-radius: 14px;
+      padding: 14px;
+      background: radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      min-height: 150px;
+      display: grid;
+      gap: 10px;
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+      cursor: pointer;
+    }
+
+    .frame:hover {
+      transform: translateY(-4px);
+      border-color: rgba(255, 255, 255, 0.18);
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .frame.selected {
+      border-color: rgba(52, 211, 153, 0.9);
+      box-shadow: 0 16px 40px rgba(52, 211, 153, 0.35);
+    }
+
+    .frame .character {
+      height: 90px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      font-size: 38px;
+      font-weight: 700;
+      color: #0f172a;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+    }
+
+    .frame .meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .frame .tag {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 700;
+      cursor: pointer;
+      color: #0f172a;
+      background: linear-gradient(135deg, #22d3ee, #0ea5e9);
+      box-shadow: 0 12px 28px rgba(14, 165, 233, 0.35);
+      transition: transform 140ms ease, box-shadow 140ms ease;
+    }
+
+    button.secondary {
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text);
+      box-shadow: none;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+    }
+
+    .selection-panel {
+      margin-top: 18px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .selection-panel h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .selection-panel .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      color: var(--muted);
+    }
+
+    .selection-panel .chip {
+      padding: 6px 10px;
+      border-radius: 10px;
+      background: rgba(52, 211, 153, 0.12);
+      border: 1px solid rgba(52, 211, 153, 0.4);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .status {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .status strong {
+      color: #fff;
+    }
+
+    .empty {
+      margin: 32px 0;
+      padding: 24px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      text-align: center;
+      color: var(--muted);
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Group identical frames with a click</h1>
+    <p class="subhead">
+      This standalone demo imitates an annotation station. Frames are displayed in batches, and you can select all
+      matching frames, submit them as a group, and watch them disappear while a new batch arrives.
+    </p>
+  </header>
+
+  <main>
+    <section class="toolbar">
+      <div class="info">
+        <div class="muted-pill">Incoming batch <strong id="batch-counter">1</strong> of <strong id="batch-total">1</strong></div>
+        <div class="muted-pill">Frames remaining in batch: <strong id="frame-count">0</strong></div>
+      </div>
+      <div class="info">
+        <div class="muted-pill">Selection size: <strong id="selection-size">0</strong></div>
+        <div class="muted-pill">Console logs show when frames are fetched and submitted.</div>
+      </div>
+    </section>
+
+    <div id="frame-grid" class="grid" role="list"></div>
+
+    <div class="empty" id="empty-state" hidden>
+      <p>All demo batches are finished. Refresh to start again.</p>
+    </div>
+
+    <div class="selection-panel">
+      <h3>Current group</h3>
+      <div class="chips" id="selection-chips"></div>
+      <div class="actions">
+        <button id="submit-btn" disabled>Submit group</button>
+        <button id="reset-btn" class="secondary">Reset selection</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+  </main>
+
+  <script>
+    const demoBatches = [
+      [
+        { id: "frame-01", character: "A", variant: "bold" },
+        { id: "frame-02", character: "A", variant: "bold" },
+        { id: "frame-03", character: "B", variant: "italic" },
+        { id: "frame-04", character: "B", variant: "italic" },
+        { id: "frame-05", character: "C", variant: "outlined" },
+        { id: "frame-06", character: "C", variant: "outlined" }
+      ],
+      [
+        { id: "frame-07", character: "K", variant: "wide" },
+        { id: "frame-08", character: "K", variant: "wide" },
+        { id: "frame-09", character: "M", variant: "condensed" },
+        { id: "frame-10", character: "M", variant: "condensed" },
+        { id: "frame-11", character: "Z", variant: "sharp" },
+        { id: "frame-12", character: "Z", variant: "sharp" }
+      ],
+      [
+        { id: "frame-13", character: "Q", variant: "bold" },
+        { id: "frame-14", character: "Q", variant: "bold" },
+        { id: "frame-15", character: "R", variant: "italic" },
+        { id: "frame-16", character: "T", variant: "thin" },
+        { id: "frame-17", character: "T", variant: "thin" },
+        { id: "frame-18", character: "R", variant: "italic" }
+      ]
+    ];
+
+    const gradientPalette = [
+      "linear-gradient(135deg, #fca5a5, #f43f5e)",
+      "linear-gradient(135deg, #a5b4fc, #6366f1)",
+      "linear-gradient(135deg, #7dd3fc, #38bdf8)",
+      "linear-gradient(135deg, #6ee7b7, #34d399)",
+      "linear-gradient(135deg, #fbcfe8, #ec4899)",
+      "linear-gradient(135deg, #fde68a, #f59e0b)"
+    ];
+
+    const state = {
+      batchIndex: 0,
+      frames: [],
+      selection: new Set()
+    };
+
+    const grid = document.getElementById("frame-grid");
+    const selectionChips = document.getElementById("selection-chips");
+    const selectionSize = document.getElementById("selection-size");
+    const frameCount = document.getElementById("frame-count");
+    const status = document.getElementById("status");
+    const batchCounter = document.getElementById("batch-counter");
+    const batchTotal = document.getElementById("batch-total");
+    const submitBtn = document.getElementById("submit-btn");
+    const resetBtn = document.getElementById("reset-btn");
+    const emptyState = document.getElementById("empty-state");
+
+    function logFetch(index) {
+      console.log(`Fetching frames from service (demo batch ${index + 1})...`);
+    }
+
+    function logSubmit(payload) {
+      console.log("Submitting annotation payload to service:", payload);
+    }
+
+    function loadBatch(index) {
+      if (index >= demoBatches.length) {
+        grid.innerHTML = "";
+        emptyState.hidden = false;
+        state.frames = [];
+        updateCounters();
+        return;
+      }
+
+      state.batchIndex = index;
+      state.frames = demoBatches[index].map((frame, i) => ({
+        ...frame,
+        gradient: gradientPalette[i % gradientPalette.length]
+      }));
+      state.selection.clear();
+      emptyState.hidden = true;
+      logFetch(index);
+      renderFrames();
+      updateCounters();
+      updateSelection();
+      status.textContent = "Select all identical frames and submit them as a group.";
+    }
+
+    function toggleSelection(id) {
+      if (state.selection.has(id)) {
+        state.selection.delete(id);
+      } else {
+        state.selection.add(id);
+      }
+      updateSelection();
+    }
+
+    function updateSelection() {
+      selectionChips.innerHTML = "";
+      const selectedFrames = state.frames.filter((frame) => state.selection.has(frame.id));
+
+      selectedFrames.forEach((frame) => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.textContent = `${frame.character} (${frame.id})`;
+        selectionChips.appendChild(chip);
+      });
+
+      selectionSize.textContent = state.selection.size;
+      submitBtn.disabled = state.selection.size === 0;
+      refreshFrameHighlight();
+    }
+
+    function refreshFrameHighlight() {
+      [...grid.querySelectorAll(".frame")].forEach((card) => {
+        const selected = state.selection.has(card.dataset.id);
+        card.classList.toggle("selected", selected);
+      });
+    }
+
+    function renderFrames() {
+      grid.innerHTML = "";
+
+      if (state.frames.length === 0) {
+        grid.innerHTML = "";
+        return;
+      }
+
+      state.frames.forEach((frame) => {
+        const card = document.createElement("article");
+        card.className = "frame";
+        card.dataset.id = frame.id;
+        card.setAttribute("role", "listitem");
+        card.addEventListener("click", () => toggleSelection(frame.id));
+
+        const character = document.createElement("div");
+        character.className = "character";
+        character.style.background = frame.gradient;
+        character.textContent = frame.character;
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+        meta.innerHTML = `<span>Variant: <strong>${frame.variant}</strong></span>`;
+
+        const tag = document.createElement("div");
+        tag.className = "tag";
+        tag.textContent = frame.id;
+
+        meta.appendChild(tag);
+        card.appendChild(character);
+        card.appendChild(meta);
+        grid.appendChild(card);
+      });
+    }
+
+    function submitSelection() {
+      if (state.selection.size === 0) {
+        status.textContent = "Select at least one frame to submit.";
+        return;
+      }
+
+      const payload = state.frames
+        .filter((frame) => state.selection.has(frame.id))
+        .map((frame) => ({ id: frame.id, character: frame.character, variant: frame.variant }));
+
+      logSubmit({ batch: state.batchIndex + 1, frames: payload });
+
+      state.frames = state.frames.filter((frame) => !state.selection.has(frame.id));
+      state.selection.clear();
+      renderFrames();
+      updateSelection();
+      updateCounters();
+
+      if (state.frames.length === 0) {
+        status.textContent = "Batch completed. Loading next frames...";
+        setTimeout(() => loadBatch(state.batchIndex + 1), 500);
+      } else {
+        status.textContent = "Submitted! Keep annotating the remaining frames.";
+      }
+    }
+
+    function resetSelection() {
+      state.selection.clear();
+      updateSelection();
+      status.textContent = "Selection cleared.";
+    }
+
+    function updateCounters() {
+      batchCounter.textContent = Math.min(state.batchIndex + 1, demoBatches.length);
+      batchTotal.textContent = demoBatches.length;
+      frameCount.textContent = state.frames.length;
+    }
+
+    submitBtn.addEventListener("click", submitSelection);
+    resetBtn.addEventListener("click", resetSelection);
+
+    loadBatch(0);
+  </script>
+</body>
+</html>
